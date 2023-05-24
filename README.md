@@ -5,11 +5,15 @@
 - Lami Kaan Kosesoy
 - Ali Kenan Yagmur
 
+The aim of this project is to deploy Zulip Chat App on Kubernetes.
+The application is deployed on a Kubernetes cluster with 1 master and 2 worker nodes.
+Currently, the application is up and running at https://k8s.uzmankaza.com.
+
 # Installation, Configuration and Deployment
 
 ### 1. Install Docker and Kubernetes on Ubuntu Server
 
-Install docker and kubernetes on your master and worker nodes. You can use the following commands to install docker and kubernetes on your nodes.
+Install docker and kubernetes on your master and worker nodes. You can use the following commands:
 
 ```bash
 sudo apt-get update
@@ -76,6 +80,59 @@ See the logs of the zulip pod:
 
 ```bash
 kubectl describe pod [pod-name]
+```
+
+### 5. Setup Reverse Proxy via Nginx
+
+Install nginx on the master node:
+
+```bash
+sudo apt-get install nginx
+```
+
+Install certbot:
+
+```bash
+sudo apt-get install certbot python-certbot-nginx
+```
+
+Obtain a certificate:
+
+```bash
+sudo certbot certonly -d site.com 
+```
+This will create a new directory in /etc/letsencrypt/live/site.com and store the certificate files in that directory.
+
+
+Create a new nginx configuration file:
+
+```bash
+sudo nano /etc/nginx/conf.d/site.com.conf
+```
+
+Add the following configuration to the file:
+
+```conf
+server {
+    listen 443 ssl;
+
+    ssl_certificate /etc/letsencrypt/live/site.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/site.com/privkey.pem;
+
+    location / {
+        proxy_pass https://35.229.151.156:30443; # this ip changes every time I restart the vm
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the new configuration:
+
+```bash
+systemctl reload nginx
 ```
 
 ### 5. Debugging
