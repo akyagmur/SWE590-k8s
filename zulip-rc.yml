@@ -6,7 +6,7 @@ metadata:
     version: 1.8.1-0
     app: zulip
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     version: 1.8.1-0
     app: zulip
